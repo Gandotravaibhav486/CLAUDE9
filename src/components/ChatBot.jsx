@@ -17,17 +17,25 @@ export default function ChatBot({ contractText, results }) {
   const send = async () => {
     const text = input.trim()
     if (!text || loading) return
-    setMessages(m => [...m, { role: 'user', content: text }])
+    const nextMessages = [...messages, { role: 'user', content: text }]
+    setMessages(nextMessages)
     setInput('')
     setLoading(true)
     try {
-      const res  = await fetch('/api/chat', {
+      const system = `You are a contract assistant helping a user understand their Indian rental agreement.
+The contract analysis results are: ${JSON.stringify(results)}.
+${contractText ? `The contract text is:\n${contractText.slice(0, 8000)}` : ''}
+Answer questions concisely. Use ₹ for amounts. Do not give legal advice — frame responses as analysis only.`
+
+      const apiMessages = nextMessages.map(m => ({ role: m.role, content: m.content }))
+
+      const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, contractText, results, history: messages }),
+        body: JSON.stringify({ system, messages: apiMessages, max_tokens: 1024 }),
       })
-      const data = await res.json()
-      setMessages(m => [...m, { role: 'assistant', content: data.reply }])
+      const { text: reply } = await res.json()
+      setMessages(m => [...m, { role: 'assistant', content: reply }])
     } catch {
       setMessages(m => [...m, { role: 'assistant', content: 'Connection error — please try again.' }])
     } finally {

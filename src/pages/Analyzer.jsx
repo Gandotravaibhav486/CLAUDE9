@@ -8,6 +8,45 @@ import ClauseCard  from '../components/ClauseCard.jsx'
 import FixSuggestion  from '../components/FixSuggestion.jsx'
 import ChatBot     from '../components/ChatBot.jsx'
 import { compress } from '../utils/compress.js'
+import { extractJSON } from '../utils/extractJSON.js'
+
+const SYSTEM_PROMPT = `You are a legal contract analyser specialising in Indian rental agreements.
+Analyse the provided contract and return ONLY a JSON object — no preamble, no explanation — with this exact shape:
+
+{
+  "riskScore": <integer 0-100>,
+  "tenantBias": <integer 0-100, percentage of clauses favouring tenant>,
+  "ownerBias": <integer 0-100, percentage of clauses favouring owner>,
+  "summary": "<2-3 sentence plain-English overview of the contract's overall risk>",
+  "financialRisks": [
+    {
+      "title": "<short risk name>",
+      "description": "<what could go wrong and why>",
+      "estimatedImpact": "<₹ amount or range e.g. ₹20,000–₹80,000>",
+      "severity": "high|medium|low"
+    }
+  ],
+  "clauses": [
+    {
+      "id": "<unique slug e.g. clause_1>",
+      "type": "illegal|unfair|risky|neutral",
+      "severity": "high|medium|low",
+      "originalText": "<exact verbatim text from contract>",
+      "explanation": "<plain English explanation of why this is problematic>",
+      "legalRef": "<relevant Indian law e.g. Model Tenancy Act 2021 S.11, or null>"
+    }
+  ],
+  "fixes": [
+    {
+      "clauseId": "<matches a clause id above>",
+      "originalText": "<the problematic original text>",
+      "suggestedText": "<safer rewrite that protects the tenant>",
+      "reason": "<one sentence on why this fix is safer>"
+    }
+  ]
+}
+
+Focus on Indian rental law. Use ₹ for all amounts. Only flag clauses that are genuinely problematic.`
 
 const SEPARATOR = (
   <div style={{
@@ -99,27 +138,37 @@ export default function Analyzer() {
     setError(null)
     setResults(null)
     try {
-      let body
+      let userContent
       if (upload.mode === 'pdf') {
         const text = compress(await readAsText(upload.files[0]))
         setRawText(text)
-        body = { contractText: text }
+        userContent = `Analyse this Indian rental agreement:\n\n${text.slice(0, 15000)}`
       } else {
-        const images = await Promise.all(
+        const imgBlocks = await Promise.all(
           upload.files.map(async f => ({
-            data: await readAsBase64(f),
-            mediaType: f.type,
+            type: 'image',
+            source: { type: 'base64', media_type: f.type, data: await readAsBase64(f) },
           }))
         )
-        body = { images }
+        userContent = [
+          ...imgBlocks,
+          { type: 'text', text: 'Analyse this Indian rental agreement shown in the image(s) above.' },
+        ]
       }
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          system: SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: userContent }],
+          max_tokens: 4096,
+        }),
       })
       if (!res.ok) throw new Error((await res.json()).error || 'Analysis failed')
-      setResults(await res.json())
+      const { text } = await res.json()
+      const parsed = extractJSON(text)
+      if (!parsed) throw new Error('Could not parse analysis response.')
+      setResults(parsed)
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.')
     } finally {
