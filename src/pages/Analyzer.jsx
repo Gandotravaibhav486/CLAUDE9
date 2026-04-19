@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Header     from '../components/Header.jsx'
 import UploadZone from '../components/UploadZone.jsx'
 import ClauseCard, { RISK_COLOR, RISK_LABEL } from '../components/ClauseCard.jsx'
+import HiddenRefs from '../components/HiddenRefs.jsx'
 import ChatBot    from '../components/ChatBot.jsx'
 import { analyzeContract } from '../utils/analyzeContract.js'
 
@@ -184,47 +185,13 @@ function FilterTabs({ active, onChange, clauses }) {
   )
 }
 
-function HiddenRefCard({ item }) {
-  const [expanded, setExpanded] = useState(false)
-  return (
-    <div
-      onClick={() => setExpanded(x => !x)}
-      style={{
-        background: '#0f0f0f', border: '1px solid #1a1a1a',
-        borderLeft: '3px solid #c8a96e33', borderRadius: '10px',
-        padding: '16px 20px', cursor: 'pointer', transition: 'border-color 0.2s',
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', color: '#c8a96e', letterSpacing: '0.1em' }}>
-          {item.ref}
-        </span>
-        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '13px', color: '#3a3530' }}>
-          {expanded ? '−' : '+'}
-        </span>
-      </div>
-      <p style={{
-        fontFamily: "'Inter', sans-serif", fontSize: '12px', color: '#3a3530',
-        margin: '6px 0 0', fontStyle: 'italic',
-        display: '-webkit-box', WebkitLineClamp: expanded ? 'unset' : 1,
-        WebkitBoxOrient: 'vertical', overflow: expanded ? 'visible' : 'hidden',
-      }}>{item.context}</p>
-      {expanded && (
-        <p style={{
-          fontFamily: "'Inter', sans-serif", fontSize: '13px', color: '#6b6154',
-          lineHeight: '1.6', margin: '12px 0 0', paddingTop: '12px', borderTop: '1px solid #1a1a1a',
-        }}>{item.explanation}</p>
-      )}
-    </div>
-  )
-}
-
 export default function Analyzer() {
   const [upload,      setUpload]      = useState(null)
   const [analyzing,   setAnalyzing]   = useState(false)
   const [results,     setResults]     = useState(null)
   const [error,       setError]       = useState(null)
   const [filter,      setFilter]      = useState('all')
+  const [mainTab,     setMainTab]     = useState('clauses')
   const [chatSeed,    setChatSeed]    = useState(null)
 
   const runAnalysis = async () => {
@@ -233,6 +200,7 @@ export default function Analyzer() {
     setError(null)
     setResults(null)
     setFilter('all')
+    setMainTab('clauses')
     try {
       const data = await analyzeContract({ files: upload.files, mode: upload.mode })
       setResults(data)
@@ -318,33 +286,66 @@ export default function Analyzer() {
                   <ClauseBreakdown clauses={results.clauses} />
                 )}
 
-                {/* Hidden refs in sidebar */}
+                {/* Hidden refs count pill in sidebar */}
                 {results.hiddenReferences?.length > 0 && (
-                  <div style={{
-                    background: '#0f0f0f', border: '1px solid #1a1a1a',
-                    borderRadius: '10px', padding: '20px', marginTop: '12px',
-                  }}>
-                    <p style={{
-                      fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px',
-                      color: '#3a3530', letterSpacing: '0.2em', marginBottom: '12px',
-                    }}>HIDDEN REFERENCES</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {results.hiddenReferences.map((item, i) => (
-                        <HiddenRefCard key={i} item={item} />
-                      ))}
-                    </div>
-                  </div>
+                  <button
+                    onClick={() => setMainTab('refs')}
+                    style={{
+                      width: '100%', marginTop: '12px',
+                      background: '#0f0f0f', border: '1px solid #1a1a1a',
+                      borderRadius: '10px', padding: '14px 16px',
+                      cursor: 'pointer', textAlign: 'left',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      transition: 'border-color 0.15s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = '#c8a96e33'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = '#1a1a1a'}
+                  >
+                    <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: '#3a3530', letterSpacing: '0.2em' }}>
+                      HIDDEN REFERENCES
+                    </span>
+                    <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', color: '#c8a96e' }}>
+                      {results.hiddenReferences.length} →
+                    </span>
+                  </button>
                 )}
               </div>
 
-              {/* MAIN: filter tabs + clauses */}
+              {/* MAIN: tab switcher + content */}
               <div>
-                <SectionLabel>✦ CLAUSE ANALYSIS</SectionLabel>
+                {/* Main tab bar */}
+                <div style={{ display: 'flex', gap: '4px', marginBottom: '24px', borderBottom: '1px solid #1a1a1a', paddingBottom: '0' }}>
+                  {[
+                    { id: 'clauses', label: 'Clauses', count: results.clauses?.length ?? 0 },
+                    { id: 'refs',    label: 'Hidden References', count: results.hiddenReferences?.length ?? 0 },
+                  ].map(tab => {
+                    const active = mainTab === tab.id
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setMainTab(tab.id)}
+                        style={{
+                          fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px',
+                          letterSpacing: '0.1em', padding: '10px 16px',
+                          cursor: 'pointer', background: 'transparent',
+                          border: 'none', borderBottom: `2px solid ${active ? '#c8a96e' : 'transparent'}`,
+                          color: active ? '#c8a96e' : '#3a3530',
+                          marginBottom: '-1px', transition: 'color 0.15s, border-color 0.15s',
+                        }}
+                      >
+                        {tab.label}
+                        {tab.count > 0 && (
+                          <span style={{ marginLeft: '6px', opacity: 0.5, fontSize: '10px' }}>{tab.count}</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
 
-                {results.clauses?.length > 0 && (
+                {/* Clauses tab */}
+                {mainTab === 'clauses' && results.clauses?.length > 0 && (
                   <>
                     <FilterTabs active={filter} onChange={setFilter} clauses={results.clauses} />
-
                     {filteredClauses.length === 0 ? (
                       <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '12px', color: '#2a2520', letterSpacing: '0.1em', padding: '24px 0' }}>
                         NO CLAUSES IN THIS CATEGORY
@@ -363,6 +364,11 @@ export default function Analyzer() {
                       </div>
                     )}
                   </>
+                )}
+
+                {/* Hidden References tab */}
+                {mainTab === 'refs' && (
+                  <HiddenRefs refs={results.hiddenReferences ?? []} />
                 )}
               </div>
             </div>

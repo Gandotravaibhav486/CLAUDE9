@@ -27,6 +27,8 @@ Return ONLY a valid JSON object with this exact structure — no preamble, no ex
   "hiddenReferences": [
     {
       "ref": "<the reference as written e.g. Art. 12, Schedule B, Section 144 CrPC>",
+      "type": "article|section|schedule|act|clause|rule|regulation",
+      "importance": "high|medium|low",
       "context": "<the exact sentence or clause where this appears>",
       "explanation": "<what this law, article, or schedule likely means and why it matters to the tenant>"
     }
@@ -39,6 +41,9 @@ Risk level rules (apply strictly):
 - medium: potentially unfair, worth negotiating, or creates meaningful financial exposure
 - low: minor concern, standard but worth being aware of
 - info: neutral, standard boilerplate, or informational clause
+
+hiddenReferences importance: high = significantly affects tenant rights or finances; medium = worth understanding; low = minor procedural reference.
+hiddenReferences type: article, section, schedule, act, clause, rule, or regulation — based on what the reference is.
 
 isKeyClause: Mark true for the 3-5 most important clauses the tenant must fully understand before signing (e.g. deposit terms, rent escalation, lock-in period, eviction conditions). Mark false for all others.
 
