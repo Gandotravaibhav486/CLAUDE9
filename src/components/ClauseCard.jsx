@@ -1,137 +1,153 @@
 import { useState } from 'react'
 
-const RISK_COLOR = {
-  high:   '#ff4444',
-  medium: '#f5a623',
-  low:    '#c8a96e',
-  info:   '#6b6154',
+export const RISK_COLOR = {
+  unfair: '#a855f7',
+  high:   '#ef4444',
+  medium: '#f59e0b',
+  low:    '#22c55e',
+  info:   '#3b82f6',
 }
 
-export default function ClauseCard({ clause }) {
+export const RISK_LABEL = {
+  unfair: 'UNFAIR',
+  high:   'HIGH RISK',
+  medium: 'MEDIUM RISK',
+  low:    'LOW RISK',
+  info:   'INFO',
+}
+
+export default function ClauseCard({ clause, index, onAskAssistant, animationDelay = 0 }) {
   const [expanded, setExpanded] = useState(false)
   const color = RISK_COLOR[clause.risk] ?? '#6b6154'
+  const num   = String(index + 1).padStart(2, '0')
 
   return (
-    <div
-      onClick={() => setExpanded(x => !x)}
-      onMouseEnter={e => {
-        e.currentTarget.style.borderColor = '#c8a96e44'
-        e.currentTarget.style.boxShadow   = '0 0 24px #c8a96e11'
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.borderColor = '#1a1a1a'
-        e.currentTarget.style.boxShadow   = 'none'
-      }}
-      style={{
-        background: '#0f0f0f',
-        border: '1px solid #1a1a1a',
-        borderLeft: `3px solid ${color}`,
-        borderRadius: '10px',
-        padding: '18px 20px',
-        cursor: 'pointer',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', flex: 1 }}>
-          <span style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: '10px', color,
-            padding: '3px 10px',
-            border: `1px solid ${color}33`,
-            borderRadius: '999px',
-            background: `${color}0d`,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-          }}>{clause.risk}</span>
-          <span style={{
-            fontFamily: "'Inter', sans-serif",
-            fontSize: '13px',
-            color: '#f0ede8',
-            fontWeight: 500,
-          }}>{clause.title}</span>
-        </div>
+    <div style={{
+      background: '#0c0c0c',
+      border: '1px solid #1a1a1a',
+      borderLeft: `3px solid ${color}`,
+      borderRadius: '10px',
+      overflow: 'hidden',
+      animation: 'fadeInUp 0.4s ease both',
+      animationDelay: `${animationDelay}s`,
+    }}>
+      {/* Header — always visible, clickable */}
+      <div
+        onClick={() => setExpanded(x => !x)}
+        onMouseEnter={e => e.currentTarget.style.background = '#111'}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '12px',
+          padding: '16px 20px', cursor: 'pointer', transition: 'background 0.15s',
+        }}
+      >
         <span style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: '14px',
-          color: '#3a3530',
-          userSelect: 'none',
-          flexShrink: 0,
-        }}>{expanded ? '−' : '+'}</span>
+          fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px',
+          color: '#3a3530', letterSpacing: '0.05em', flexShrink: 0,
+        }}>§{num}</span>
+
+        <span style={{
+          fontFamily: "'Inter', sans-serif", fontSize: '14px',
+          color: '#f0ede8', fontWeight: 500, flex: 1, lineHeight: 1.3,
+        }}>{clause.title}</span>
+
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+          {clause.isKeyClause && (
+            <span style={{
+              fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px',
+              color: '#c8a96e', background: '#c8a96e0d',
+              border: '1px solid #c8a96e33', borderRadius: '999px',
+              padding: '2px 8px', letterSpacing: '0.12em',
+            }}>KEY</span>
+          )}
+          <span style={{
+            fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color,
+            background: `${color}0d`, border: `1px solid ${color}33`,
+            borderRadius: '999px', padding: '3px 10px', letterSpacing: '0.1em',
+          }}>{RISK_LABEL[clause.risk] ?? clause.risk.toUpperCase()}</span>
+          <span style={{
+            fontFamily: "'IBM Plex Mono', monospace", fontSize: '13px',
+            color: '#3a3530', marginLeft: '4px', userSelect: 'none',
+          }}>{expanded ? '−' : '+'}</span>
+        </div>
       </div>
 
-      <p style={{
-        fontFamily: "'Inter', sans-serif",
-        fontSize: '12px',
-        color: '#6b6154',
-        lineHeight: '1.6',
-        margin: '10px 0 0',
-        display: '-webkit-box',
-        WebkitLineClamp: expanded ? 'unset' : 2,
-        WebkitBoxOrient: 'vertical',
-        overflow: expanded ? 'visible' : 'hidden',
-        fontStyle: 'italic',
-      }}>{clause.originalText}</p>
-
+      {/* Expanded content */}
       {expanded && (
-        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #1a1a1a', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div>
+        <div style={{ borderTop: '1px solid #1a1a1a', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+          {/* Original language */}
+          <div style={{
+            background: '#080808', borderRadius: '6px',
+            padding: '14px 16px', borderLeft: `2px solid ${color}44`,
+          }}>
             <p style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: '9px', color: '#3a3530',
-              letterSpacing: '0.15em', marginBottom: '6px',
-            }}>PLAIN ENGLISH</p>
-            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: '#f0ede8', lineHeight: '1.6', margin: 0 }}>
-              {clause.plainEnglish}
-            </p>
+              fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px',
+              color: '#3a3530', letterSpacing: '0.15em', marginBottom: '8px',
+            }}>ORIGINAL LANGUAGE</p>
+            <p style={{
+              fontFamily: "'Inter', sans-serif", fontSize: '13px',
+              color: '#6b6154', lineHeight: '1.65', margin: 0, fontStyle: 'italic',
+            }}>"{clause.originalText}"</p>
           </div>
 
-          {clause.riskReason && (
-            <div>
-              <p style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: '9px', color: '#3a3530',
-                letterSpacing: '0.15em', marginBottom: '6px',
-              }}>WHY THIS RISK LEVEL</p>
-              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: '#6b6154', lineHeight: '1.6', margin: 0 }}>
-                {clause.riskReason}
-              </p>
-            </div>
-          )}
-
-          {clause.recommendation && (
+          {/* Why It Matters + What To Do */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div style={{
-              background: `${color}08`,
-              border: `1px solid ${color}22`,
-              borderRadius: '6px',
-              padding: '10px 14px',
+              background: '#080808', borderRadius: '6px', padding: '14px 16px',
             }}>
               <p style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: '9px', color,
-                letterSpacing: '0.15em', marginBottom: '4px',
-              }}>RECOMMENDATION</p>
-              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: '#f0ede8', lineHeight: '1.5', margin: 0 }}>
-                {clause.recommendation}
-              </p>
+                fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px',
+                color: '#3a3530', letterSpacing: '0.15em', marginBottom: '8px',
+              }}>WHY IT MATTERS</p>
+              <p style={{
+                fontFamily: "'Inter', sans-serif", fontSize: '13px',
+                color: '#f0ede8', lineHeight: '1.6', margin: 0,
+              }}>{clause.riskReason}</p>
             </div>
-          )}
+            <div style={{
+              background: `${color}06`, border: `1px solid ${color}1a`,
+              borderRadius: '6px', padding: '14px 16px',
+            }}>
+              <p style={{
+                fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px',
+                color, letterSpacing: '0.15em', marginBottom: '8px',
+              }}>WHAT TO DO</p>
+              <p style={{
+                fontFamily: "'Inter', sans-serif", fontSize: '13px',
+                color: '#f0ede8', lineHeight: '1.6', margin: 0,
+              }}>{clause.recommendation}</p>
+            </div>
+          </div>
 
+          {/* Legal refs */}
           {clause.relatedRefs?.length > 0 && (
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {clause.relatedRefs.map((ref, i) => (
                 <span key={i} style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: '10px', color: '#c8a96e',
-                  background: '#c8a96e0a',
-                  border: '1px solid #c8a96e22',
-                  padding: '4px 10px',
-                  borderRadius: '999px',
-                  letterSpacing: '0.05em',
+                  fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px',
+                  color: '#c8a96e', background: '#c8a96e0a',
+                  border: '1px solid #c8a96e22', padding: '3px 10px',
+                  borderRadius: '999px', letterSpacing: '0.05em',
                 }}>⚖ {ref}</span>
               ))}
             </div>
           )}
+
+          {/* Ask assistant */}
+          <button
+            onClick={e => { e.stopPropagation(); onAskAssistant?.(clause) }}
+            style={{
+              alignSelf: 'flex-start',
+              fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px',
+              color: '#c8a96e', background: 'transparent',
+              border: '1px solid #c8a96e33', borderRadius: '6px',
+              padding: '8px 16px', cursor: 'pointer', letterSpacing: '0.1em',
+              transition: 'border-color 0.15s, background 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#c8a96e88'; e.currentTarget.style.background = '#c8a96e0a' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = '#c8a96e33'; e.currentTarget.style.background = 'transparent' }}
+          >⚖ Ask assistant about this clause</button>
         </div>
       )}
     </div>

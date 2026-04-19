@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 
-export default function ChatBot({ contractText, results }) {
+export default function ChatBot({ contractText, results, seedMessage }) {
   const [open, setOpen]       = useState(false)
   const [input, setInput]     = useState('')
   const [loading, setLoading] = useState(false)
@@ -8,6 +8,13 @@ export default function ChatBot({ contractText, results }) {
     role: 'assistant',
     content: "I've analysed your contract. Ask me about any clause, your financial risks, or what to negotiate before signing.",
   }])
+
+  useEffect(() => {
+    if (seedMessage) {
+      setOpen(true)
+      setInput(seedMessage)
+    }
+  }, [seedMessage])
   const bottomRef = useRef()
 
   useEffect(() => {

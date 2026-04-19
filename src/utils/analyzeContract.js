@@ -17,10 +17,11 @@ Return ONLY a valid JSON object with this exact structure — no preamble, no ex
       "title": "<short descriptive title e.g. Security Deposit>",
       "originalText": "<exact verbatim text of this clause from the contract>",
       "plainEnglish": "<clear plain-English explanation of what this clause means in practice>",
-      "risk": "high|medium|low|info",
+      "risk": "unfair|high|medium|low|info",
       "riskReason": "<why this risk level was assigned — be specific, cite Indian law where relevant>",
       "recommendation": "<actionable advice: what to negotiate, flag, add, or accept as-is>",
-      "relatedRefs": ["<legal references e.g. Model Tenancy Act 2021 S.6, Transfer of Property Act 1882 S.105>"]
+      "relatedRefs": ["<legal references e.g. Model Tenancy Act 2021 S.6, Transfer of Property Act 1882 S.105>"],
+      "isKeyClause": true|false
     }
   ],
   "hiddenReferences": [
@@ -32,11 +33,14 @@ Return ONLY a valid JSON object with this exact structure — no preamble, no ex
   ]
 }
 
-Risk level rules:
-- high: illegal under Indian law, void/unenforceable, or severely one-sided (e.g. waiving statutory rights)
+Risk level rules (apply strictly):
+- unfair: ONLY use for clauses so severely one-sided that the tenant should REFUSE TO SIGN until this clause is removed or rewritten. Examples: waiving all liability for landlord negligence, forfeiting deposit without any conditions, eviction without notice. Use at most 1-2 times per contract. Most contracts will have zero unfair clauses. Do NOT use this for merely inconvenient clauses.
+- high: illegal under Indian law, void/unenforceable, or creates very serious financial exposure
 - medium: potentially unfair, worth negotiating, or creates meaningful financial exposure
 - low: minor concern, standard but worth being aware of
 - info: neutral, standard boilerplate, or informational clause
+
+isKeyClause: Mark true for the 3-5 most important clauses the tenant must fully understand before signing (e.g. deposit terms, rent escalation, lock-in period, eviction conditions). Mark false for all others.
 
 Extract every clause you can identify. Do not skip neutral clauses.
 Use ₹ for all amounts. Base analysis on: Transfer of Property Act 1882, Model Tenancy Act 2021, relevant State Rent Control Acts, Registration Act 1908, Indian Contract Act 1872.`
