@@ -39,7 +39,6 @@ export default defineConfig(({ mode }) => {
                   max_tokens,
                   ...(system ? { system } : {}),
                   messages,
-                  betas: ['pdfs-2024-09-25'],
                 })
 
                 res.setHeader('Content-Type', 'application/json')
