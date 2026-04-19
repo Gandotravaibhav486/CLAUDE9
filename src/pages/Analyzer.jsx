@@ -5,6 +5,7 @@ import ClauseCard, { RISK_COLOR, RISK_LABEL } from '../components/ClauseCard.jsx
 import HiddenRefs from '../components/HiddenRefs.jsx'
 import ChatBot    from '../components/ChatBot.jsx'
 import { analyzeContract } from '../utils/analyzeContract.js'
+import FeedbackForm from '../components/FeedbackForm.jsx'
 
 const FILTERS = [
   { id: 'all',    label: 'All' },
@@ -288,9 +289,25 @@ export default function Analyzer() {
             fontSize: 'clamp(20px, 3vw, 28px)', color: '#f0ede8',
             fontWeight: 600, marginBottom: '8px', letterSpacing: '-0.01em',
           }}>Analyse your rental agreement</h1>
-          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '14px', color: '#6b6154', marginBottom: '24px' }}>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '14px', color: '#6b6154', marginBottom: '20px' }}>
             Upload images or a PDF — all clauses extracted, hidden legal references flagged.
           </p>
+
+          {/* Disclaimer */}
+          <div style={{
+            display: 'flex', gap: '10px', alignItems: 'flex-start',
+            background: '#0f0f0f', border: '1px solid #c8a96e1a',
+            borderRadius: '8px', padding: '12px 16px', marginBottom: '24px',
+          }}>
+            <span style={{ fontSize: '13px', flexShrink: 0, marginTop: '1px' }}>⚠</span>
+            <p style={{
+              fontFamily: "'Inter', sans-serif", fontSize: '12px',
+              color: '#6b6154', lineHeight: '1.6', margin: 0,
+            }}>
+              This tool provides AI-generated analysis for informational purposes only — not legal advice.
+              Do not rely solely on this output before signing. <span style={{ color: '#c8a96e' }}>Consult a qualified lawyer</span> for binding decisions.
+            </p>
+          </div>
 
           {/* Perspective toggle */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '14px', marginBottom: '28px', background: '#0f0f0f', border: '1px solid #1a1a1a', borderRadius: '10px', padding: '6px 8px' }}>
@@ -475,6 +492,12 @@ export default function Analyzer() {
                 )}
               </div>
             </div>
+
+            <FeedbackForm
+              perspective={perspective}
+              overallRisk={results.overallRisk}
+              clauseCount={results.clauses?.length ?? 0}
+            />
 
           </div>
         )}
