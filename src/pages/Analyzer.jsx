@@ -54,10 +54,10 @@ function RiskMeter({ overallRisk, riskSummary }) {
       background: '#0f0f0f', border: '1px solid #1a1a1a',
       borderRadius: '10px', padding: '20px',
     }}>
-      <p style={{
-        fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px',
-        color: '#3a3530', letterSpacing: '0.2em', marginBottom: '12px',
-      }}>OVERALL RISK</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
+        <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: '#3a3530', letterSpacing: '0.2em', margin: 0 }}>OVERALL RISK</p>
+        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '20px', color, fontWeight: 600, letterSpacing: '-0.02em' }}>{pct}%</span>
+      </div>
 
       {/* Gradient meter */}
       <div style={{ position: 'relative', height: '8px', borderRadius: '999px', background: 'linear-gradient(90deg, #22c55e 0%, #f59e0b 50%, #ef4444 85%, #a855f7 100%)', marginBottom: '8px' }}>
