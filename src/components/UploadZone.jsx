@@ -153,7 +153,7 @@ export default function UploadZone({ onFileSelect, analyzing }) {
         <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '14px', color: '#c8a96e', letterSpacing: '0.1em', marginBottom: '8px' }}>
           ANALYSING CONTRACT...
         </p>
-        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: '#6b6154' }}>This will take under a minute</p>
+        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: '#6b6154' }}>This may take a few mins</p>
       </div>
     )
   }
