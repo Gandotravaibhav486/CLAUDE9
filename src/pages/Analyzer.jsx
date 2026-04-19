@@ -73,31 +73,50 @@ function GlowButton({ children, onClick, disabled }) {
 }
 
 export default function Analyzer() {
-  const [file,      setFile]      = useState(null)
+  const [upload,    setUpload]    = useState(null)   // { mode, files }
   const [analyzing, setAnalyzing] = useState(false)
   const [results,   setResults]   = useState(null)
   const [error,     setError]     = useState(null)
   const [rawText,   setRawText]   = useState('')
 
-  const readFile = (f) => new Promise((resolve, reject) => {
+  const readAsText = (f) => new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload  = e => resolve(e.target.result)
     reader.onerror = reject
     reader.readAsText(f)
   })
 
+  const readAsBase64 = (f) => new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload  = e => resolve(e.target.result.split(',')[1])
+    reader.onerror = reject
+    reader.readAsDataURL(f)
+  })
+
   const runAnalysis = async () => {
-    if (!file) return
+    if (!upload) return
     setAnalyzing(true)
     setError(null)
     setResults(null)
     try {
-      const text = compress(await readFile(file))
-      setRawText(text)
-      const res  = await fetch('/api/analyze', {
+      let body
+      if (upload.mode === 'pdf') {
+        const text = compress(await readAsText(upload.files[0]))
+        setRawText(text)
+        body = { contractText: text }
+      } else {
+        const images = await Promise.all(
+          upload.files.map(async f => ({
+            data: await readAsBase64(f),
+            mediaType: f.type,
+          }))
+        )
+        body = { images }
+      }
+      const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contractText: text }),
+        body: JSON.stringify(body),
       })
       if (!res.ok) throw new Error((await res.json()).error || 'Analysis failed')
       setResults(await res.json())
@@ -132,9 +151,9 @@ export default function Analyzer() {
             marginBottom: '28px',
           }}>Upload a TXT file for best results. PDF/DOC support requires text extraction on the server.</p>
 
-          <UploadZone onFileSelect={setFile} analyzing={analyzing} />
+          <UploadZone onFileSelect={setUpload} analyzing={analyzing} />
 
-          {file && !analyzing && (
+          {upload && !analyzing && (
             <div style={{ textAlign: 'center', marginTop: '28px' }}>
               <GlowButton onClick={runAnalysis}>
                 RUN ANALYSIS →

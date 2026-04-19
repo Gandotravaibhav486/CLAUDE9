@@ -6,7 +6,7 @@ export default function ChatBot({ contractText, results }) {
   const [loading, setLoading] = useState(false)
   const [messages, setMessages] = useState([{
     role: 'assistant',
-    content: 'I've analysed your contract. Ask me about any clause, your financial risks, or what to negotiate before signing.',
+    content: "I've analysed your contract. Ask me about any clause, your financial risks, or what to negotiate before signing.",
   }])
   const bottomRef = useRef()
 

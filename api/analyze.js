@@ -45,21 +45,31 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { contractText } = req.body ?? {}
+  const { contractText, images } = req.body ?? {}
 
-  if (!contractText || contractText.trim().length < 50) {
-    return res.status(400).json({ error: 'Contract text is too short or missing.' })
+  if (!contractText && !images?.length) {
+    return res.status(400).json({ error: 'No contract content provided.' })
+  }
+  if (contractText && contractText.trim().length < 50) {
+    return res.status(400).json({ error: 'Contract text is too short.' })
   }
 
   try {
+    const userContent = images?.length
+      ? [
+          ...images.map(img => ({
+            type: 'image',
+            source: { type: 'base64', media_type: img.mediaType, data: img.data },
+          })),
+          { type: 'text', text: 'Analyse this Indian rental agreement shown in the image(s) above.' },
+        ]
+      : `Analyse this Indian rental agreement:\n\n${contractText.slice(0, 15000)}`
+
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
       system: SYSTEM_PROMPT,
-      messages: [{
-        role: 'user',
-        content: `Analyse this Indian rental agreement:\n\n${contractText.slice(0, 15000)}`,
-      }],
+      messages: [{ role: 'user', content: userContent }],
     })
 
     const raw = message.content[0].text
