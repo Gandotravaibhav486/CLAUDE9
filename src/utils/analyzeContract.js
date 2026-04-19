@@ -21,7 +21,8 @@ Return ONLY a valid JSON object with this exact structure — no preamble, no ex
       "riskReason": "<why this risk level was assigned — be specific, cite Indian law where relevant>",
       "recommendation": "<actionable advice: what to negotiate, flag, add, or accept as-is>",
       "relatedRefs": ["<legal references e.g. Model Tenancy Act 2021 S.6, Transfer of Property Act 1882 S.105>"],
-      "isKeyClause": true|false
+      "isKeyClause": true|false,
+      "valueAtRisk": <integer rupees the tenant stands to lose due to this clause vs fair/legal norm, or 0 if no financial exposure. Examples: security deposit ₹7.5L vs fair 3-month norm ₹1.5L → 600000; painting clause ₹50k vs market ₹15k → 35000; standard boilerplate → 0. Never fabricate — only set non-zero when the contract explicitly states an amount you can compare against a known norm.>
     }
   ],
   "hiddenReferences": [

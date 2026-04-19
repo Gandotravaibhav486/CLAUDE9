@@ -15,6 +15,49 @@ const FILTERS = [
   { id: 'key',    label: 'Key Clause' },
 ]
 
+function computeValueAtRisk(clauses) {
+  if (!clauses?.length) return 0
+  return clauses.reduce((sum, c) => sum + (Number(c.valueAtRisk) || 0), 0)
+}
+
+function formatINR(amount) {
+  if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(2)} Cr`
+  if (amount >= 100000)   return `₹${(amount / 100000).toFixed(2)} L`
+  if (amount >= 1000)     return `₹${(amount / 1000).toFixed(1)}K`
+  return `₹${amount.toLocaleString('en-IN')}`
+}
+
+function ValueAtRisk({ amount }) {
+  if (!amount) return null
+  return (
+    <div style={{
+      background: '#0f0f0f',
+      border: '1px solid #ef444433',
+      borderRadius: '12px',
+      padding: '20px 28px',
+      textAlign: 'right',
+      minWidth: '200px',
+      flexShrink: 0,
+    }}>
+      <p style={{
+        fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px',
+        color: '#3a3530', letterSpacing: '0.2em', margin: '0 0 8px',
+      }}>TOTAL VALUE AT RISK</p>
+      <p style={{
+        fontFamily: "'IBM Plex Mono', monospace",
+        fontSize: 'clamp(24px, 4vw, 36px)',
+        color: '#ef4444', fontWeight: 700,
+        letterSpacing: '-0.03em', margin: 0,
+        textShadow: '0 0 24px #ef444455',
+      }}>{formatINR(amount)}</p>
+      <p style={{
+        fontFamily: "'Inter', sans-serif", fontSize: '11px',
+        color: '#3a3530', margin: '6px 0 0',
+      }}>above fair market / legal norms</p>
+    </div>
+  )
+}
+
 function computeRiskScore(clauses) {
   if (!clauses?.length) return 0
   const weights = { unfair: 10, high: 8, medium: 6, low: 4, info: 0 }
@@ -267,17 +310,20 @@ export default function Analyzer() {
         {results && (
           <div style={{ animation: 'fadeInUp 0.6s ease both' }}>
 
-            {/* Title + Summary */}
-            <div style={{ marginBottom: '32px' }}>
-              {results.title && (
-                <h2 style={{
-                  fontFamily: "'IBM Plex Mono', monospace", fontSize: '20px',
-                  color: '#f0ede8', fontWeight: 600, marginBottom: '10px', letterSpacing: '-0.01em',
-                }}>{results.title}</h2>
-              )}
-              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '15px', color: '#6b6154', lineHeight: '1.75', maxWidth: '700px' }}>
-                {results.summary}
-              </p>
+            {/* Title + Summary + Value at Risk */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '24px', marginBottom: '32px', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: '280px' }}>
+                {results.title && (
+                  <h2 style={{
+                    fontFamily: "'IBM Plex Mono', monospace", fontSize: '20px',
+                    color: '#f0ede8', fontWeight: 600, marginBottom: '10px', letterSpacing: '-0.01em',
+                  }}>{results.title}</h2>
+                )}
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '15px', color: '#6b6154', lineHeight: '1.75', maxWidth: '700px' }}>
+                  {results.summary}
+                </p>
+              </div>
+              <ValueAtRisk amount={computeValueAtRisk(results.clauses)} />
             </div>
 
             {/* Two-column layout: sidebar + clauses */}
