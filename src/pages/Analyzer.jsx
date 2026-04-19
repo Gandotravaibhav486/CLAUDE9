@@ -27,8 +27,11 @@ function formatINR(amount) {
   return `₹${amount.toLocaleString('en-IN')}`
 }
 
-function ValueAtRisk({ amount }) {
+function ValueAtRisk({ amount, perspective }) {
   if (!amount) return null
+  const subtext = perspective === 'owner'
+    ? 'unprotected exposure in this contract'
+    : 'above fair market / legal norms'
   return (
     <div style={{
       background: '#0f0f0f',
@@ -53,7 +56,7 @@ function ValueAtRisk({ amount }) {
       <p style={{
         fontFamily: "'Inter', sans-serif", fontSize: '11px',
         color: '#3a3530', margin: '6px 0 0',
-      }}>above fair market / legal norms</p>
+      }}>{subtext}</p>
     </div>
   )
 }
@@ -242,6 +245,7 @@ export default function Analyzer() {
   const [filter,      setFilter]      = useState('all')
   const [mainTab,     setMainTab]     = useState('clauses')
   const [chatSeed,    setChatSeed]    = useState(null)
+  const [perspective, setPerspective] = useState('tenant')
 
   const runAnalysis = async () => {
     if (!upload) return
@@ -251,7 +255,7 @@ export default function Analyzer() {
     setFilter('all')
     setMainTab('clauses')
     try {
-      const data = await analyzeContract({ files: upload.files, mode: upload.mode })
+      const data = await analyzeContract({ files: upload.files, mode: upload.mode, perspective })
       setResults(data)
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.')
@@ -284,9 +288,52 @@ export default function Analyzer() {
             fontSize: 'clamp(20px, 3vw, 28px)', color: '#f0ede8',
             fontWeight: 600, marginBottom: '8px', letterSpacing: '-0.01em',
           }}>Analyse your rental agreement</h1>
-          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '14px', color: '#6b6154', marginBottom: '28px' }}>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '14px', color: '#6b6154', marginBottom: '24px' }}>
             Upload images or a PDF — all clauses extracted, hidden legal references flagged.
           </p>
+
+          {/* Perspective toggle */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '14px', marginBottom: '28px', background: '#0f0f0f', border: '1px solid #1a1a1a', borderRadius: '10px', padding: '6px 8px' }}>
+            {[
+              { id: 'tenant', label: 'TENANT', color: '#22c55e', desc: 'Deposit risk · Hidden costs · Eviction' },
+              { id: 'owner',  label: 'OWNER',  color: '#3b82f6', desc: 'Rent default · Damage · Enforceability' },
+            ].map(opt => {
+              const active = perspective === opt.id
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => setPerspective(opt.id)}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+                    gap: '3px', padding: '10px 18px', borderRadius: '7px',
+                    border: active ? `1px solid ${opt.color}44` : '1px solid transparent',
+                    background: active ? `${opt.color}0f` : 'transparent',
+                    cursor: 'pointer', transition: 'all 0.2s',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                      width: '7px', height: '7px', borderRadius: '50%',
+                      background: active ? opt.color : '#2a2520',
+                      boxShadow: active ? `0 0 8px ${opt.color}88` : 'none',
+                      transition: 'all 0.2s',
+                    }} />
+                    <span style={{
+                      fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px',
+                      color: active ? opt.color : '#3a3530',
+                      letterSpacing: '0.14em', transition: 'color 0.2s',
+                    }}>{opt.label}</span>
+                  </div>
+                  <span style={{
+                    fontFamily: "'Inter', sans-serif", fontSize: '10px',
+                    color: active ? `${opt.color}99` : '#2a2520',
+                    letterSpacing: '0.01em', paddingLeft: '15px',
+                    transition: 'color 0.2s',
+                  }}>{opt.desc}</span>
+                </button>
+              )
+            })}
+          </div>
 
           <UploadZone onFileSelect={setUpload} analyzing={analyzing} />
 
@@ -323,7 +370,7 @@ export default function Analyzer() {
                   {results.summary}
                 </p>
               </div>
-              <ValueAtRisk amount={computeValueAtRisk(results.clauses)} />
+              <ValueAtRisk amount={computeValueAtRisk(results.clauses)} perspective={perspective} />
             </div>
 
             {/* Two-column layout: sidebar + clauses */}
