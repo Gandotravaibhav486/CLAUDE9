@@ -5,6 +5,7 @@ import ClauseCard, { RISK_COLOR, RISK_LABEL } from '../components/ClauseCard.jsx
 import HiddenRefs from '../components/HiddenRefs.jsx'
 import ChatBot    from '../components/ChatBot.jsx'
 import { analyzeContract } from '../utils/analyzeContract.js'
+import FeedbackForm from '../components/FeedbackForm.jsx'
 
 const FILTERS = [
   { id: 'all',    label: 'All' },
@@ -475,6 +476,12 @@ export default function Analyzer() {
                 )}
               </div>
             </div>
+
+            <FeedbackForm
+              perspective={perspective}
+              overallRisk={results.overallRisk}
+              clauseCount={results.clauses?.length ?? 0}
+            />
 
           </div>
         )}
