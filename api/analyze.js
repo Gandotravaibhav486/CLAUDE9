@@ -19,6 +19,7 @@ export default async function handler(req, res) {
       max_tokens,
       ...(system ? { system } : {}),
       messages,
+      betas: ['pdfs-2024-09-25'],
     })
     return res.status(200).json({ text: response.content[0].text })
   } catch (err) {

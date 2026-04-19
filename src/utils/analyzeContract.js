@@ -1,5 +1,3 @@
-import { compress } from './compress.js'
-
 const SYSTEM_PROMPT = `You are an expert legal analyst specialising in Indian rental agreements and property law.
 
 Analyse the provided rental agreement thoroughly and extract EVERY clause — not just risky ones. Include clauses of all risk levels.
@@ -43,15 +41,6 @@ Risk level rules:
 Extract every clause you can identify. Do not skip neutral clauses.
 Use ₹ for all amounts. Base analysis on: Transfer of Property Act 1882, Model Tenancy Act 2021, relevant State Rent Control Acts, Registration Act 1908, Indian Contract Act 1872.`
 
-function readAsText(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload  = e => resolve(e.target.result)
-    reader.onerror = reject
-    reader.readAsText(file)
-  })
-}
-
 function readAsBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -80,9 +69,15 @@ export async function analyzeContract({ files, mode }) {
   let userContent
 
   if (mode === 'pdf') {
-    const raw  = await readAsText(files[0])
-    const text = compress(raw)
-    userContent = `Analyse this Indian rental agreement:\n\n${text.slice(0, 15000)}`
+    // Send PDF as a native document block so Claude can read scanned/image-based PDFs
+    const data = await readAsBase64(files[0])
+    userContent = [
+      {
+        type: 'document',
+        source: { type: 'base64', media_type: 'application/pdf', data },
+      },
+      { type: 'text', text: 'Analyse this Indian rental agreement. Extract every clause.' },
+    ]
   } else {
     const imgBlocks = await Promise.all(
       files.map(async f => ({
