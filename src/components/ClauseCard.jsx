@@ -134,6 +134,31 @@ export default function ClauseCard({ clause, index, onAskAssistant, animationDel
             </div>
           )}
 
+          {/* Value at Risk breakdown */}
+          {clause.valueAtRisk?.computed > 0 && (
+            <div style={{
+              background: '#ef44440a', border: '1px solid #ef444422',
+              borderRadius: '6px', padding: '12px 14px',
+              display: 'flex', flexDirection: 'column', gap: '6px',
+            }}>
+              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: '#ef4444', letterSpacing: '0.15em', margin: 0 }}>VALUE AT RISK</p>
+              <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', color: '#6b6154' }}>
+                  Contract: <span style={{ color: '#f0ede8' }}>₹{clause.valueAtRisk.contractAmount?.toLocaleString('en-IN')}</span>
+                </span>
+                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', color: '#6b6154' }}>
+                  Fair norm: <span style={{ color: '#f0ede8' }}>₹{clause.valueAtRisk.fairAmount?.toLocaleString('en-IN')}</span>
+                </span>
+                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', color: '#ef4444', fontWeight: 600 }}>
+                  Excess: ₹{clause.valueAtRisk.computed?.toLocaleString('en-IN')}
+                </span>
+              </div>
+              {clause.valueAtRisk.basis && (
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: '#6b6154', margin: 0, lineHeight: 1.5 }}>{clause.valueAtRisk.basis}</p>
+              )}
+            </div>
+          )}
+
           {/* Ask assistant */}
           <button
             onClick={e => { e.stopPropagation(); onAskAssistant?.(clause) }}

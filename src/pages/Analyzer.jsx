@@ -17,7 +17,7 @@ const FILTERS = [
 
 function computeValueAtRisk(clauses) {
   if (!clauses?.length) return 0
-  return clauses.reduce((sum, c) => sum + (Number(c.valueAtRisk) || 0), 0)
+  return clauses.reduce((sum, c) => sum + (Number(c.valueAtRisk?.computed) || 0), 0)
 }
 
 function formatINR(amount) {

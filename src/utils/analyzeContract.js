@@ -24,7 +24,12 @@ Return ONLY a valid JSON object with this exact structure — no preamble, no ex
       "recommendation": "<actionable advice for the tenant: what to negotiate, flag, add, or accept as-is>",
       "relatedRefs": ["<legal references e.g. Model Tenancy Act 2021 S.6, Transfer of Property Act 1882 S.105>"],
       "isKeyClause": true|false,
-      "valueAtRisk": <integer rupees the tenant stands to lose due to this clause vs fair/legal norm, or 0 if no financial exposure. Examples: security deposit ₹7.5L vs fair 3-month norm ₹1.5L → 600000; painting clause ₹50k vs market ₹15k → 35000; standard boilerplate → 0. Never fabricate — only set non-zero when the contract explicitly states an amount you can compare against a known norm.>
+      "valueAtRisk": {
+        "contractAmount": <integer rupees explicitly written in this clause, or null if no ₹ amount appears in the clause text>,
+        "fairAmount": <integer rupees from a legal standard or declared benchmark listed below, or null if no applicable standard exists>,
+        "basis": "<one sentence citing the legal standard or benchmark used, e.g. 'MTA 2021 S.6 caps deposit at 2×monthly rent (2×₹50k=₹1L); contract states ₹7.5L' — or null if computed is 0>",
+        "computed": <integer: contractAmount minus fairAmount if both are non-null and contractAmount exceeds fairAmount, otherwise exactly 0>
+      }
     }
   ],
   "hiddenReferences": [
@@ -37,6 +42,18 @@ Return ONLY a valid JSON object with this exact structure — no preamble, no ex
     }
   ]
 }
+
+DECLARED BENCHMARKS — use only these when computing valueAtRisk.fairAmount. Do not use any other market estimates.
+- Security deposit cap: 2 × monthly rent (MTA 2021 S.6). Use monthly rent amount from the contract itself.
+- Painting / whitewashing charge: ₹15,000 flat for a standard apartment.
+- Deep cleaning charge on vacating: ₹4,000 flat.
+- Minimum notice period: 1 month (MTA 2021). Only relevant if the contract specifies a ₹ forfeiture for shorter notice.
+
+valueAtRisk rules (enforce strictly):
+- contractAmount MUST be a ₹ figure explicitly written in the clause. If no amount is stated, set contractAmount: null and computed: 0.
+- fairAmount MUST come from the declared benchmarks above or a cited Indian statute — never from general market knowledge.
+- computed = contractAmount − fairAmount only when contractAmount > fairAmount and both are non-null. Otherwise computed: 0.
+- Do NOT set computed non-zero for clauses that merely seem risky but state no explicit amount.
 
 Risk level rules (apply strictly from tenant's perspective):
 - unfair: ONLY use for clauses so severely one-sided that the tenant should REFUSE TO SIGN until this clause is removed or rewritten. Examples: waiving all liability for landlord negligence, forfeiting deposit without any conditions, eviction without notice. Use at most 1-2 times per contract. Most contracts will have zero unfair clauses. Do NOT use this for merely inconvenient clauses.
@@ -79,7 +96,12 @@ Return ONLY a valid JSON object with this exact structure — no preamble, no ex
       "recommendation": "<actionable advice for the owner: what to strengthen, add, remove, or accept as-is>",
       "relatedRefs": ["<legal references e.g. Model Tenancy Act 2021 S.6, Transfer of Property Act 1882 S.105>"],
       "isKeyClause": true|false,
-      "valueAtRisk": <integer rupees the owner stands to lose due to this clause being weak or absent vs what a well-drafted clause would protect, or 0 if no financial exposure. Examples: no damage deposit clause on ₹5L property → 100000; rent default with no late fee on ₹50k/month rent → 50000; standard boilerplate → 0. Never fabricate — only set non-zero when the contract explicitly states an amount or the gap is quantifiable.>
+      "valueAtRisk": {
+        "contractAmount": <integer rupees explicitly written in this clause, or null if no ₹ amount appears in the clause text>,
+        "fairAmount": <integer rupees from a legal standard or declared benchmark listed below, or null if no applicable standard exists>,
+        "basis": "<one sentence citing the legal standard or benchmark used — or null if computed is 0>",
+        "computed": <integer: contractAmount minus fairAmount if both are non-null and contractAmount exceeds fairAmount, otherwise exactly 0>
+      }
     }
   ],
   "hiddenReferences": [
@@ -92,6 +114,18 @@ Return ONLY a valid JSON object with this exact structure — no preamble, no ex
     }
   ]
 }
+
+DECLARED BENCHMARKS — use only these when computing valueAtRisk.fairAmount. Do not use any other market estimates.
+- Security deposit cap: 2 × monthly rent (MTA 2021 S.6). Use monthly rent amount from the contract itself.
+- Painting / whitewashing charge: ₹15,000 flat for a standard apartment.
+- Deep cleaning charge on vacating: ₹4,000 flat.
+- Minimum notice period: 1 month (MTA 2021). Only relevant if the contract specifies a ₹ forfeiture for shorter notice.
+
+valueAtRisk rules (enforce strictly):
+- contractAmount MUST be a ₹ figure explicitly written in the clause. If no amount is stated, set contractAmount: null and computed: 0.
+- fairAmount MUST come from the declared benchmarks above or a cited Indian statute — never from general market knowledge.
+- computed = contractAmount − fairAmount only when contractAmount > fairAmount and both are non-null. Otherwise computed: 0.
+- Do NOT set computed non-zero for clauses that merely seem risky but state no explicit amount.
 
 Risk level rules (apply strictly from owner's perspective):
 - unfair: ONLY use for clauses so severely one-sided against the owner that it should be rewritten before signing. Examples: tenant can sublet without permission, owner cannot inspect property, deposit cannot be used for damages. Use at most 1-2 times per contract.
