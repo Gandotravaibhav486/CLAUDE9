@@ -15,7 +15,13 @@ const FILTERS = [
   { id: 'key',    label: 'Key Clause' },
 ]
 
-const METER_POS = { low: 15, medium: 50, high: 82 }
+function computeRiskScore(clauses) {
+  if (!clauses?.length) return 0
+  const weights = { unfair: 10, high: 8, medium: 6, low: 4, info: 0 }
+  const raw = clauses.reduce((sum, c) => sum + (weights[c.risk] ?? 0), 0)
+  const maxPossible = clauses.length * 10
+  return Math.min(100, Math.round((raw / maxPossible) * 100))
+}
 
 function SectionLabel({ children }) {
   return (
@@ -46,9 +52,9 @@ function GlowButton({ children, onClick }) {
   )
 }
 
-function RiskMeter({ overallRisk, riskSummary }) {
+function RiskMeter({ overallRisk, riskSummary, score }) {
   const color = RISK_COLOR[overallRisk] ?? '#6b6154'
-  const pct   = METER_POS[overallRisk] ?? 50
+  const pct   = score
 
   return (
     <div style={{
@@ -280,7 +286,11 @@ export default function Analyzer() {
               {/* SIDEBAR */}
               <div style={{ position: 'sticky', top: '76px' }}>
                 {results.overallRisk && (
-                  <RiskMeter overallRisk={results.overallRisk} riskSummary={results.riskSummary} />
+                  <RiskMeter
+                    overallRisk={results.overallRisk}
+                    riskSummary={results.riskSummary}
+                    score={computeRiskScore(results.clauses)}
+                  />
                 )}
                 {results.clauses?.length > 0 && (
                   <ClauseBreakdown clauses={results.clauses} />
