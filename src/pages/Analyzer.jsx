@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Header     from '../components/Header.jsx'
 import UploadZone from '../components/UploadZone.jsx'
 import ClauseCard, { RISK_COLOR, RISK_LABEL } from '../components/ClauseCard.jsx'
@@ -252,6 +253,7 @@ function FilterTabs({ active, onChange, clauses }) {
 
 export default function Analyzer() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [upload,      setUpload]      = useState(null)
   const [analyzing,   setAnalyzing]   = useState(false)
   const [results,     setResults]     = useState(null)
@@ -273,13 +275,15 @@ export default function Analyzer() {
 
   const runAnalysis = async () => {
     if (!upload) return
-    if (user) {
-      const current = await countAnalyses(user.id)
-      setAnalysisCount(current)
-      if (current >= ANALYSIS_LIMIT) {
-        setError(`You've used all ${ANALYSIS_LIMIT} free analyses — upgrade to continue.`)
-        return
-      }
+    if (!user) {
+      navigate('/login')
+      return
+    }
+    const current = await countAnalyses(user.id)
+    setAnalysisCount(current)
+    if (current >= ANALYSIS_LIMIT) {
+      setError(`You've used all ${ANALYSIS_LIMIT} free analyses — upgrade to continue.`)
+      return
     }
     setAnalyzing(true)
     setError(null)
