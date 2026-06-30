@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Header     from '../components/Header.jsx'
 import UploadZone from '../components/UploadZone.jsx'
 import ClauseCard, { RISK_COLOR, RISK_LABEL } from '../components/ClauseCard.jsx'
@@ -6,6 +6,18 @@ import HiddenRefs from '../components/HiddenRefs.jsx'
 import ChatBot    from '../components/ChatBot.jsx'
 import { analyzeContract } from '../utils/analyzeContract.js'
 import FeedbackForm from '../components/FeedbackForm.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
+import { supabase } from '../utils/supabase.js'
+import { ANALYSIS_LIMIT } from './Dashboard.jsx'
+
+async function countAnalyses(userId) {
+  const { count } = await supabase
+    .from('documents')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('kind', 'analyzed')
+  return count ?? 0
+}
 
 const FILTERS = [
   { id: 'all',    label: 'All' },
@@ -239,6 +251,7 @@ function FilterTabs({ active, onChange, clauses }) {
 }
 
 export default function Analyzer() {
+  const { user } = useAuth()
   const [upload,      setUpload]      = useState(null)
   const [analyzing,   setAnalyzing]   = useState(false)
   const [results,     setResults]     = useState(null)
@@ -247,9 +260,27 @@ export default function Analyzer() {
   const [mainTab,     setMainTab]     = useState('clauses')
   const [chatSeed,    setChatSeed]    = useState(null)
   const [perspective, setPerspective] = useState('tenant')
+  const [analysisCount, setAnalysisCount] = useState(null)
+
+  useEffect(() => {
+    if (!user) { setAnalysisCount(null); return }
+    let active = true
+    countAnalyses(user.id).then(c => { if (active) setAnalysisCount(c) })
+    return () => { active = false }
+  }, [user])
+
+  const atLimit = user && analysisCount !== null && analysisCount >= ANALYSIS_LIMIT
 
   const runAnalysis = async () => {
     if (!upload) return
+    if (user) {
+      const current = await countAnalyses(user.id)
+      setAnalysisCount(current)
+      if (current >= ANALYSIS_LIMIT) {
+        setError(`You've used all ${ANALYSIS_LIMIT} free analyses — upgrade to continue.`)
+        return
+      }
+    }
     setAnalyzing(true)
     setError(null)
     setResults(null)
@@ -258,6 +289,18 @@ export default function Analyzer() {
     try {
       const data = await analyzeContract({ files: upload.files, mode: upload.mode, perspective })
       setResults(data)
+      if (user) {
+        await supabase.from('documents').insert({
+          user_id: user.id,
+          kind: 'analyzed',
+          title: data.title,
+          perspective,
+          overall_risk: data.overallRisk,
+          clause_count: data.clauses?.length ?? 0,
+          results: data,
+        })
+        setAnalysisCount(c => (c ?? 0) + 1)
+      }
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.')
     } finally {
@@ -352,12 +395,28 @@ export default function Analyzer() {
             })}
           </div>
 
-          <UploadZone onFileSelect={setUpload} analyzing={analyzing} />
-
-          {upload && !analyzing && (
-            <div style={{ textAlign: 'center', marginTop: '28px' }}>
-              <GlowButton onClick={runAnalysis}>RUN ANALYSIS →</GlowButton>
+          {atLimit ? (
+            <div style={{
+              padding: '32px', textAlign: 'center',
+              background: '#0f0f0f', border: '1px solid #ef444433', borderRadius: '12px',
+            }}>
+              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '13px', color: '#ef4444', letterSpacing: '0.1em', margin: '0 0 8px' }}>
+                LIMIT REACHED
+              </p>
+              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: '#6b6154', margin: 0 }}>
+                You've used all {ANALYSIS_LIMIT} free analyses — upgrade to continue.
+              </p>
             </div>
+          ) : (
+            <>
+              <UploadZone onFileSelect={setUpload} analyzing={analyzing} />
+
+              {upload && !analyzing && (
+                <div style={{ textAlign: 'center', marginTop: '28px' }}>
+                  <GlowButton onClick={runAnalysis}>RUN ANALYSIS →</GlowButton>
+                </div>
+              )}
+            </>
           )}
 
           {error && (

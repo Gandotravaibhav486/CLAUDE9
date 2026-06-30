@@ -1,7 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.jsx'
+import { useTheme } from '../context/ThemeContext.jsx'
 
 export default function Header() {
   const { pathname } = useLocation()
+  const { user, profile, signOut } = useAuth()
+  const { theme, toggleTheme } = useTheme()
 
   const navLink = (to, label) => ({
     fontFamily: "'IBM Plex Mono', monospace",
@@ -43,9 +47,38 @@ export default function Header() {
         }}>LEGAL ANALYSER</span>
       </Link>
 
-      <nav style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+      <nav style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
         <Link to="/" style={navLink('/', 'HOME')}>HOME</Link>
         <Link to="/analyze" style={navLink('/analyze', 'ANALYSE')}>ANALYSE</Link>
+
+        {user ? (
+          <>
+            <Link to="/dashboard" style={navLink('/dashboard', 'DASHBOARD')}>DASHBOARD</Link>
+            {profile?.is_admin && (
+              <Link to="/admin" style={navLink('/admin', 'ADMIN')}>ADMIN</Link>
+            )}
+            <button
+              onClick={signOut}
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px',
+                letterSpacing: '0.15em', background: 'none', border: 'none',
+                color: '#6b6154', cursor: 'pointer', padding: 0,
+              }}
+            >SIGN OUT</button>
+          </>
+        ) : (
+          <Link to="/login" style={navLink('/login', 'LOGIN')}>LOGIN</Link>
+        )}
+
+        <button
+          onClick={toggleTheme}
+          title="Toggle theme"
+          style={{
+            background: 'none', border: '1px solid #1a1a1a', borderRadius: '6px',
+            width: '28px', height: '28px', cursor: 'pointer', fontSize: '13px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >{theme === 'dark' ? '☀' : '☾'}</button>
       </nav>
     </header>
   )
