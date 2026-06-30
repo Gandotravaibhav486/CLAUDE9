@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       ...(system ? { system } : {}),
       messages,
     })
-    return res.status(200).json({ text: response.content[0].text })
+    return res.status(200).json({ text: response.content[0].text, stopReason: response.stop_reason })
   } catch (err) {
     console.error('analyze error:', err)
     return res.status(500).json({ error: err.message || 'Request failed' })

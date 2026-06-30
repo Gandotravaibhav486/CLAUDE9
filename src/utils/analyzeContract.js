@@ -151,17 +151,25 @@ function readAsBase64(file) {
   })
 }
 
+function stripTrailingCommas(str) {
+  return str.replace(/,\s*([}\]])/g, '$1')
+}
+
 function robustExtractJSON(text) {
-  // 1. Try fenced code block first
+  const candidates = []
+
+  // 1. Fenced code block
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
-  if (fenced) {
-    try { return JSON.parse(fenced[1]) } catch {}
-  }
-  // 2. Find outermost { ... } ignoring leading prose
+  if (fenced) candidates.push(fenced[1])
+
+  // 2. Outermost { ... } ignoring leading/trailing prose
   const start = text.indexOf('{')
   const end   = text.lastIndexOf('}')
-  if (start !== -1 && end > start) {
-    try { return JSON.parse(text.slice(start, end + 1)) } catch {}
+  if (start !== -1 && end > start) candidates.push(text.slice(start, end + 1))
+
+  for (const candidate of candidates) {
+    try { return JSON.parse(candidate) } catch {}
+    try { return JSON.parse(stripTrailingCommas(candidate)) } catch {}
   }
   return null
 }
@@ -199,7 +207,7 @@ export async function analyzeContract({ files, mode, perspective = 'tenant' }) {
     body: JSON.stringify({
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userContent }],
-      max_tokens: 8192,
+      max_tokens: 16000,
     }),
   })
 
@@ -208,8 +216,15 @@ export async function analyzeContract({ files, mode, perspective = 'tenant' }) {
     throw new Error(err.error || 'Analysis failed')
   }
 
-  const { text } = await res.json()
-  const result   = robustExtractJSON(text)
-  if (!result) throw new Error('Could not parse analysis response. Please try again.')
+  const { text, stopReason } = await res.json()
+  const result = robustExtractJSON(text)
+
+  if (!result) {
+    console.error('analyzeContract: failed to parse model response', { stopReason, text })
+    if (stopReason === 'max_tokens') {
+      throw new Error('The agreement is long enough that the analysis got cut off. Try a shorter document, or split it and analyse in parts.')
+    }
+    throw new Error('Could not parse analysis response. Please try again.')
+  }
   return result
 }
