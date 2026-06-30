@@ -76,7 +76,7 @@ function AddMoreTile({ onClick }) {
   )
 }
 
-export default function UploadZone({ onFileSelect, analyzing }) {
+export default function UploadZone({ onFileSelect, analyzing, requireAuth, onAuthRequired }) {
   const [dragOver, setDragOver]   = useState(false)
   const [images, setImages]       = useState([])
   const [pdf, setPdf]             = useState(null)
@@ -121,6 +121,7 @@ export default function UploadZone({ onFileSelect, analyzing }) {
   const handleDrop = (e) => {
     e.preventDefault()
     setDragOver(false)
+    if (requireAuth) { onAuthRequired?.(); return }
     const files = Array.from(e.dataTransfer.files)
     if (!files.length) return
     const pdfFile = files.find(f => f.type === 'application/pdf')
@@ -242,7 +243,7 @@ export default function UploadZone({ onFileSelect, analyzing }) {
       </p>
       <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
         <button
-          onClick={() => imageInputRef.current.click()}
+          onClick={() => requireAuth ? onAuthRequired?.() : imageInputRef.current.click()}
           style={{
             fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', color: '#c8a96e',
             background: 'transparent', border: '1px solid #c8a96e33', borderRadius: '999px',
@@ -251,7 +252,7 @@ export default function UploadZone({ onFileSelect, analyzing }) {
           }}
         >UPLOAD IMAGES</button>
         <button
-          onClick={() => pdfInputRef.current.click()}
+          onClick={() => requireAuth ? onAuthRequired?.() : pdfInputRef.current.click()}
           style={{
             fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', color: '#6b6154',
             background: 'transparent', border: '1px solid #2a2520', borderRadius: '999px',

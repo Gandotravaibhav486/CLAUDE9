@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import Header     from '../components/Header.jsx'
 import UploadZone from '../components/UploadZone.jsx'
 import ClauseCard, { RISK_COLOR, RISK_LABEL } from '../components/ClauseCard.jsx'
 import HiddenRefs from '../components/HiddenRefs.jsx'
 import ChatBot    from '../components/ChatBot.jsx'
+import AuthPromptModal from '../components/AuthPromptModal.jsx'
 import { analyzeContract } from '../utils/analyzeContract.js'
 import FeedbackForm from '../components/FeedbackForm.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -253,7 +253,6 @@ function FilterTabs({ active, onChange, clauses }) {
 
 export default function Analyzer() {
   const { user } = useAuth()
-  const navigate = useNavigate()
   const [upload,      setUpload]      = useState(null)
   const [analyzing,   setAnalyzing]   = useState(false)
   const [results,     setResults]     = useState(null)
@@ -263,6 +262,7 @@ export default function Analyzer() {
   const [chatSeed,    setChatSeed]    = useState(null)
   const [perspective, setPerspective] = useState('tenant')
   const [analysisCount, setAnalysisCount] = useState(null)
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false)
 
   useEffect(() => {
     if (!user) { setAnalysisCount(null); return }
@@ -276,7 +276,7 @@ export default function Analyzer() {
   const runAnalysis = async () => {
     if (!upload) return
     if (!user) {
-      navigate('/login')
+      setShowAuthPrompt(true)
       return
     }
     const current = await countAnalyses(user.id)
@@ -413,7 +413,12 @@ export default function Analyzer() {
             </div>
           ) : (
             <>
-              <UploadZone onFileSelect={setUpload} analyzing={analyzing} />
+              <UploadZone
+                onFileSelect={setUpload}
+                analyzing={analyzing}
+                requireAuth={!user}
+                onAuthRequired={() => setShowAuthPrompt(true)}
+              />
 
               {upload && !analyzing && (
                 <div style={{ textAlign: 'center', marginTop: '28px' }}>
@@ -572,6 +577,10 @@ export default function Analyzer() {
           results={results}
           seedMessage={chatSeed}
         />
+      )}
+
+      {showAuthPrompt && (
+        <AuthPromptModal onClose={() => setShowAuthPrompt(false)} />
       )}
     </div>
   )
